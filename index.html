@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>一年精读计划</title>
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;-webkit-tap-highlight-color: transparent;}
+        html, body {height: 100%;touch-action: manipulation;}
+        body {font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Roboto, sans-serif;background: #f5f5f7;min-height: 100vh;padding-bottom: 85px;padding-top: 5px;}
+        .header {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);color: white;padding: 18px 15px 22px;position: sticky;top: 0;z-index: 100;box-shadow: 0 2px 12px rgba(0,0,0,0.15);border-radius: 12px;margin: 0 8px 15px;}
+        .header h1 {font-size: 19px;font-weight: 600;margin-bottom: 4px;}
+        .header p {font-size: 12px;opacity: 0.92;line-height: 1.4;}
+        .today-info {background: rgba(255,255,255,0.2);border-radius: 10px;padding: 10px 12px;margin-top: 10px;display: flex;justify-content: space-between;align-items: center;}
+        .container {max-width: 100%;margin: 0 auto;padding: 0 12px;}
+        .book-card {background: white;border-radius: 14px;margin-bottom: 14px;box-shadow: 0 2px 10px rgba(0,0,0,0.06);overflow: hidden;}
+        .book-header {padding: 16px;cursor: pointer;display: flex;justify-content: space-between;align-items: center;user-select: none;}
+        .book-info h2 {font-size: 17px;color: #1d1d1f;margin-bottom: 4px;}
+        .book-info p {font-size: 12px;color: #86868b;}
+        .progress {background: #e8e8ed;height: 6px;border-radius: 3px;margin-top: 8px;overflow: hidden;}
+        .progress-fill {height: 100%;background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);transition: width 0.3s;}
+        .toggle-icon {color: #86868b;transition: transform 0.3s;font-size: 18px;}
+        .book-card.expanded .toggle-icon {transform: rotate(180deg);}
+        .chapter-list {display: none;padding: 0 12px 16px;}
+        .book-card.expanded .chapter-list {display: block;}
+        .lesson-item {border: 1px solid #e5e5ea;border-radius: 10px;padding: 12px 10px;margin-bottom: 10px;transition: all 0.2s;}
+        .lesson-item:active {transform: scale(0.99);}
+        .lesson-item.done {opacity: 0.58;background: #f2f2f7;}
+        .lesson-item.done .lesson-title {text-decoration: line-through;}
+        .lesson-header {display: flex;justify-content: space-between;align-items: center;margin-bottom: 8px;flex-wrap: wrap;gap: 4px;}
+        .lesson-title {font-size: 15px;font-weight: 500;color: #1d1d1f;}
+        .lesson-date {font-size: 11px;color: #86868b;background: #f5f5f7;padding: 3px 8px;border-radius: 10px;white-space: nowrap;}
+        .lesson-today {border-color: #667eea;background: #f0f4ff;}
+        .lesson-today .lesson-date {background: #667eea;color: white;}
+        .task-list {font-size: 13px;color: #515154;line-height: 1.5;}
+        .task-list ul {margin-left: 18px;margin-top: 6px;}
+        .task-list li {margin-bottom: 5px;}
+        .check-btn {background: #34c759;color: white;border: none;padding: 7px 14px;border-radius: 8px;font-size: 13px;cursor: pointer;margin-top: 10px;font-weight: 500;-webkit-appearance: none;}
+        .lesson-item.done .check-btn {background: #86868b;}
+        .bottom-nav {position: fixed;bottom: 0;left: 0;right: 0;background: rgba(255,255,255,0.95);backdrop-filter: blur(10px);-webkit-backdrop-filter: blur(10px);display: flex;justify-content: space-around;padding: 10px 0 env(safe-area-inset-bottom);box-shadow: 0 -2px 12px rgba(0,0,0,0.08);padding-bottom: calc(10px + env(safe-area-inset-bottom));}
+        .nav-item {text-align: center;padding: 8px 15px;font-size: 12px;color: #86868b;cursor: pointer;tap-highlight-color: transparent;}
+        .nav-item.active {color: #667eea;font-weight: 500;}
+        .stats {display: grid;grid-template-columns: repeat(3, 1fr);gap: 10px;margin-bottom: 14px;}
+        .stat-card {background: white;padding: 14px 10px;border-radius: 14px;text-align: center;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .stat-number {font-size: 22px;font-weight: 600;color: #667eea;}
+        .stat-label {font-size: 11px;color: #86868b;margin-top: 4px;}
+        .objectives {background: white;border-radius: 14px;padding: 16px;margin-bottom: 14px;box-shadow: 0 2px 8px rgba(0,0,0,0.06);}
+        .objectives h3 {font-size: 15px;margin-bottom: 10px;color: #1d1d1f;}
+        .objective-item {font-size: 13px;color: #515154;margin-bottom: 6px;padding-left: 16px;position: relative;line-height: 1.4;}
+        .objective-item::before {content: "•";position: absolute;left: 5px;color: #667eea;}
+        .exam-note {background: #fff3cd;color: #856404;padding: 7px 10px;border-radius: 8px;margin-top: 8px;font-size: 12px;line-height: 1.4;}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 一年精读计划</h1>
+        <p>新概念英语第一册 + 国富论 + 就业、利息和货币通论<br>每周5天 · 一年完成</p>
+        <div class="today-info">
+            <div>
+                <strong id="today-date"></strong><br>
+                <span style="font-size:11px">今日学习任务</span>
+            </div>
+            <div>
+                <span style="font-size:22px" id="today-count">0</span>
+                <span style="font-size:11px">课</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-done">0</div>
+                <div class="stat-label">已完成</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-lessons">251</div>
+                <div class="stat-label">总课时</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="weeks-left">52</div>
+                <div class="stat-label">剩余周数</div>
+            </div>
+        </div>
+
+        <div class="objectives" id="overall-objectives">
+            <h3>🎯 总体目标</h3>
+            <div class="objective-item">新概念英语第一册：掌握基本语法句型，能进行日常英语对话，累计掌握1000+基础词汇</div>
+            <div class="objective-item">国富论：理解古典经济学经典原著，系统梳理亚当斯密的经济思想体系</div>
+            <div class="objective-item">就业利息和货币通论：理解凯恩斯宏观经济学核心框架，建立现代经济学思维</div>
+            <div class="objective-item">每单元结束安排复习自测，巩固学习成果，不走过场</div>
+        </div>
+
+        <div id="books-container"></div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('today')">📅 今日</div>
+        <div class="nav-item" onclick="switchTab('all')">📖 全部</div>
+        <div class="nav-item" onclick="resetProgress()">🔄 重置</div>
+    </div>
+
+<script>
+const startDate = new Date();
+let currentTab = 'today';
+
+// 工具函数
+function getLessonDate(lessonIndex) {
+    const date = new Date(startDate);
+    let added = 0;
+    while (added < lessonIndex) {
+        date.setDate(date.getDate() + 1);
+        if (date.getDay() !== 0 && date.getDay() !== 6) {
+            added++;
+        }
+    }
+    return date;
+}
+
+function formatDate(date) {
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const weekDays = ['日','一','二','三','四','五','六'];
+    return `${month}月${day}日 周${weekDays[date.getDay()]}`;
+}
+
+function isToday(dateStr) {
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    return dateStr.startsWith(`${month}月${day}日`);
+}
+
+// 生成新概念英语课程
+function generateConceptLessons() {
+    const chapters = [];
+    let lessonCounter = 0;
+    for (let i = 1; i <= 144; i += 2) {
+        const lessonDate = getLessonDate(lessonCounter);
+        chapters.push({
+            id: `concept-${i}`,
+            title: `第 ${i}-${i+1} 课`,
+            week: Math.floor(lessonCounter / 5) + 1,
+            date: formatDate(lessonDate),
+            tasks: [
+                `听读课文 ${i}、${i+1} 各 3 遍，模仿发音语调`,
+                `背诵课文重点句型，掌握基本对话结构`,
+                `学习本课生词短语（约10-15个），掌握发音和用法`,
+                `完成课后练习，对照答案批改`,
+                `整理本课重点语法笔记`
+            ],
+            exam: i % 10 === 0 ? '单元小结：做完单元自测，检验学习成果' : null
+        });
+        lessonCounter++;
+        if (i % 10 === 0) {
+            const reviewDate = getLessonDate(lessonCounter);
+            chapters.push({
+                id: `concept-review-${i}`,
+                title: `单元复习与自测：第 1-${i} 课`,
+                week: Math.floor(lessonCounter / 5) + 1,
+                date: formatDate(reviewDate),
+                tasks: [
+                    `快速复习所有单词，标记遗忘单词重点记忆`,
+                    `梳理本单元语法点，整理到笔记本`,
+                    `完成单元测试题，对照答案批改`,
+                    `总结错题，分析错误原因`
+                ],
+                exam: '单元自测',
+                isReview: true
+            });
+            lessonCounter++;
+        }
+    }
+    return chapters;
+}
+
+// 生成国富论课程
+function generateWealthOfNations() {
+    const conceptTotal = 144 + 14;
+    let lessonCounter = conceptTotal;
+    const chaptersData = [
+        {title: '第一篇 第1章：论分工', tasks: ['理解分工理论核心观点', '掌握分工提高生产率的三个原因', '思考分工起源与交换的关系', '整理本章核心笔记'], exam: null},
+        {title: '第一篇 第2章：论分工的起源与货币起源', tasks: ['理解分工产生的原因', '掌握货币的起源和职能', '思考为什么分工促进了货币产生', '整理核心概念'], exam: null},
+        {title: '第一篇 第3章：论商品价格', tasks: ['区分商品使用价值和交换价值', '理解劳动价值论基本观点', '掌握价格构成三要素', '整理笔记'], exam: null},
+        {title: '第一篇 第4-5章：论工资与利润', tasks: ['理解工资的决定因素和最低工资理论', '理解利润来源和利润率变化趋势', '整理核心观点', '复习本周内容'], exam: '第一篇 1-5章 内容自测'},
+        {title: '第一篇 第6章：论地租', tasks: ['理解地租的本质和来源', '掌握地租产生的条件', '区分不同土地生产物地租变化', '整理笔记'], exam: null},
+        {title: '第一篇 第7章：论自然价格与市场价格', tasks: ['理解自然价格和市场价格的区别', '掌握市场价格波动规律', '理解供求关系如何影响价格', '整理核心观点'], exam: null},
+        {title: '第一篇 第8-9章：论劳动工资与资本利润', tasks: ['理解不同职业工资利润差异原因', '理解利润和利息的关系', '整理主要观点', '复习本周内容'], exam: '第一篇 6-9章 回顾测试'},
+        {title: '第一篇 第10-11章：工资利润与地租总结', tasks: ['区分不同用途工资利润差异', '总结第一篇核心观点', '复习整篇内容整理笔记'], exam: '第一篇 全册 单元自测'},
+        {title: '第二篇 第1-2章：论资本积累与分工', tasks: ['区分固定资本和流动资本', '理解资本的作用', '掌握资本积累的途径', '整理核心概念'], exam: null},
+        {title: '第二篇 第3-5章：借贷资本与资本积累', tasks: ['理解借贷资本性质', '掌握利息来源', '理解资本积累对工资影响', '整理笔记'], exam: '第二篇 单元小结自测'},
+        {title: '第三篇 第1-2章：财富自然增长与农业发展', tasks: ['理解财富自然增长顺序', '理解罗马帝国崩溃后欧洲农业发展', '梳理历史发展脉络', '整理笔记'], exam: null},
+        {title: '第三篇 第3-4章：城市兴起与商业发展', tasks: ['理解城市兴起对经济发展作用', '理解商业如何促进农业改良', '总结第三篇核心观点', '整理笔记'], exam: '第三篇 单元自测'},
+        {title: '第四篇 第1-2章：重商主义原理', tasks: ['理解重商主义基本观点', '掌握亚当斯密对重商主义批判', '整理核心论点', '做读书笔记'], exam: null},
+        {title: '第四篇 第3-4章：对重商主义的批判（一）', tasks: ['理解对重商主义限制进口的批判', '理解为什么自由贸易更有利', '整理核心论据', '复习本周内容'], exam: '第四篇 1-4章 回顾'},
+        {title: '第四篇 第5-6章：对重农主义的评论', tasks: ['理解重农主义基本观点', '亚当斯密对重农主义评价', '整理观点对比', '复习本周内容'], exam: '第四篇 单元自测'},
+        {title: '第五篇 第1章：论国家支出', tasks: ['理解国家职能与财政支出', '区分不同类型公共支出', '整理支出原则', '做笔记'], exam: null},
+        {title: '第五篇 第2章：论税收', tasks: ['理解税收四原则', '掌握不同税收类型影响', '理解各种税收优缺点', '整理核心观点'], exam: null},
+        {title: '第五篇 第3章：论公债', tasks: ['理解公债产生原因', '掌握亚当斯密对公债看法', '总结第五篇观点', '全书复习'], exam: '第五篇+全书 单元总结自测'}
+    ];
+
+    return chaptersData.map((item, idx) => {
+        const lessonDate = getLessonDate(lessonCounter + idx);
+        return {
+            ...item,
+            id: `wealth-${idx}`,
+            week: Math.floor((lessonCounter + idx) / 5) + 1,
+            date: formatDate(lessonDate)
+        };
+    });
+}
+
+// 生成就业利息和货币通论课程
+function generateKeynes() {
+    const conceptTotal = 144 + 14;
+    const wealthTotal = 18;
+    let lessonCounter = conceptTotal + wealthTotal;
+    const chaptersData = [
+        {title: '原序', tasks: ['阅读序言，了解本书写作背景', '理解凯恩斯写作本书的目的', '整理序言核心观点'], exam: null},
+        {title: '第一篇 导言 第1-2章', tasks: ['理解本书对古典经济学的批判', '掌握凯恩斯对经济学方法的观点', '整理核心假设', '做读书笔记'], exam: null},
+        {title: '第一篇 第3章：有效需求原则', tasks: ['掌握有效需求原理核心', '理解总供给函数和总需求函数', '掌握就业乘数概念初步', '整理笔记'], exam: '第一篇 单元小结自测'},
+        {title: '第二篇 定义与观念 第4-5章', tasks: ['理解预期对生产和就业影响', '掌握单位选择问题', '整理定义体系', '复习本周内容'], exam: null},
+        {title: '第二篇 第6-7章：储蓄与投资', tasks: ['理解储蓄投资与利率关系', '掌握购买力储蓄投资区别', '对比古典理论和凯恩斯观点', '整理笔记'], exam: '第二篇 单元自测'},
+        {title: '第三篇 消费倾向 第8-9章', tasks: ['理解消费倾向基本心理法则', '掌握影响消费倾向的客观因素', '区分边际消费倾向和平均消费倾向', '整理核心观点'], exam: null},
+        {title: '第三篇 第10章：边际消费倾向与乘数', tasks: ['掌握乘数原理', '理解投资乘数如何影响就业', '计算乘数效应', '整理笔记'], exam: '第三篇 单元自测'},
+        {title: '第四篇 投资引诱 第11-12章', tasks: ['理解资本边际效率', '掌握长期预期状态', '理解投资决策心理因素', '整理笔记'], exam: null},
+        {title: '第四篇 第13-14章：利率理论', tasks: ['掌握流动性偏好理论', '理解利率决定因素', '对比古典利率理论', '整理观点对比'], exam: null},
+        {title: '第四篇 第15-16章：流动性偏好', tasks: ['理解持有货币动机', '掌握资本性质', '理解利息率和流动性偏好关系', '整理本周内容'], exam: '第四篇 上半部分自测'},
+        {title: '第四篇 第17-18章：资本与利息', tasks: ['理解利息和资本性质', '重述就业通论', '总结核心观点体系', '整理全篇框架'], exam: '第四篇 单元总结'},
+        {title: '第五篇 货币工资与物价 第19-20章', tasks: ['理解货币工资改变影响', '掌握就业函数', '理解总需求价格影响', '整理核心结论'], exam: null},
+        {title: '第五篇 第21-22章：物价论', tasks: ['理解物价水平和货币数量关系', '掌握周期理论', '理解通货紧缩影响', '整理笔记'], exam: '第五篇 单元自测'},
+        {title: '第六篇 通论引起的短论 第23章', tasks: ['理解凯恩斯对重商主义评论', '重新评价重商主义贡献', '对比分析', '整理笔记'], exam: null},
+        {title: '第六篇 第24章：结语', tasks: ['理解凯恩斯对社会哲学结论', '理解政府职能和投资社会化', '总结全书核心政策建议', '整理全书框架'], exam: '全书总结性复习与自测'}
+    ];
+
+    // 拆分成更细致的每日任务
+    const expanded = [];
+    chaptersData.forEach((item, idx) => {
+        if (item.title.includes('-') && item.title.length > 20) {
+            const task1 = item.tasks.slice(0, 2);
+            const task2 = item.tasks.slice(2);
+            expanded.push({
+                title: item.title.split('：')[0] + '（上）',
+                tasks: task1,
+                exam: null
+            });
+            expanded.push({
+                title: item.title.split('：')[0] + '（下）' + (item.title.includes('：') ? '：' + item.title.split('：')[1] : ''),
+                tasks: task2,
+                exam: item.exam
+            });
+        } else {
+            expanded.push(item);
+        }
+    });
+
+    return expanded.map((item, idx) => {
+        const lessonDate = getLessonDate(lessonCounter + idx);
+        return {
+            ...item,
+            id: `keynes-${idx}`,
+            week: Math.floor((lessonCounter + idx) / 5) + 1,
+            date: formatDate(lessonDate)
+        };
+    });
+}
+
+const books = [
+    {
+        id: 'concept',
+        name: '新概念英语第一册',
+        author: '亚历山大',
+        chapters: generateConceptLessons()
+    },
+    {
+        id: 'wealth',
+        name: '国富论',
+        author: '亚当·斯密',
+        chapters: generateWealthOfNations()
+    },
+    {
+        id: 'keynes',
+        name: '就业、利息和货币通论',
+        author: '约翰·梅纳德·凯恩斯',
+        chapters: generateKeynes()
+    }
+];
+
+function toggleBook(bookId) {
+    const card = document.querySelector(`[data-book-id="${bookId}"]`);
+    card.classList.toggle('expanded');
+    saveState();
+}
+
+function toggleDone(lessonId) {
+    const item = document.getElementById(lessonId);
+    item.classList.toggle('done');
+    updateStats();
+    saveState();
+}
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    event.target.classList.add('active');
+    render();
+}
+
+function renderBook(book) {
+    const doneCount = book.chapters.filter(c => isDone(c.id)).length;
+    const progress = (doneCount / book.chapters.length) * 100;
+    let html = `
+        <div class="book-card" data-book-id="${book.id}">
+            <div class="book-header" onclick="toggleBook('${book.id}')">
+                <div class="book-info">
+                    <h2>${book.name}</h2>
+                    <p>${book.author} | ${doneCount}/${book.chapters.length} 课完成</p>
+                    <div class="progress">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+                <div class="toggle-icon">▼</div>
+            </div>
+            <div class="chapter-list" id="chapter-list-${book.id}">
+    `;
+
+    const chaptersToShow = currentTab === 'today' 
+        ? book.chapters.filter(c => isToday(c.date)) 
+        : book.chapters;
+
+    chaptersToShow.forEach(chapter => {
+        const isDoneStatus = isDone(chapter.id);
+        const isTodayClass = isToday(chapter.date) ? 'lesson-today' : '';
+        html += `
+            <div class="lesson-item ${isDoneStatus ? 'done' : ''} ${isTodayClass}" id="${chapter.id}">
+                <div class="lesson-header">
+                    <span class="lesson-title">${chapter.title}</span>
+                    <span class="lesson-date">${chapter.date}</span>
+                </div>
+                <div class="task-list">
+                    <ul>
+                        ${chapter.tasks.map(t => `<li>${t}</li>`).join('')}
+                    </ul>
+                    ${chapter.exam ? `<div class="exam-note">✅ ${chapter.exam}</div>` : ''}
+                </div>
+                <button class="check-btn" onclick="toggleDone('${chapter.id}')">
+                    ${isDoneStatus ? '取消完成' : '完成本课'}
+                </button>
+            </div>
+        `;
+    });
+
+    html += `</div></div>`;
+    return html;
+}
+
+function isDone(lessonId) {
+    const done = JSON.parse(localStorage.getItem('study-done') || '[]');
+    return done.includes(lessonId);
+}
+
+function saveState() {
+    const done = [];
+    document.querySelectorAll('.lesson-item.done').forEach(el => {
+        done.push(el.id);
+    });
+    localStorage.setItem('study-done', JSON.stringify(done));
+    updateStats();
+}
+
+function updateStats() {
+    const allLessons = document.querySelectorAll('.lesson-item');
+    const done = document.querySelectorAll('.lesson-item.done');
+    const todayLessons = document.querySelectorAll('.lesson-today');
+
+    document.getElementById('total-done').textContent = done.length;
+    document.getElementById('today-count').textContent = todayLessons.length;
+    
+    const doneCount = done.length;
+    const weeksDone = Math.floor(doneCount / 5);
+    document.getElementById('weeks-left').textContent = 52 - weeksDone;
+}
+
+function resetProgress() {
+    if (confirm('确定要重置所有进度吗？此操作不可恢复。')) {
+        localStorage.removeItem('study-done');
+        render();
+    }
+}
+
+function render() {
+    const container = document.getElementById('books-container');
+    const today = new Date();
+    document.getElementById('today-date').textContent = formatDate(today);
+    let html = '';
+    books.forEach(book => {
+        html += renderBook(book);
+    });
+    container.innerHTML = html;
+    updateStats();
+}
+
+// 初始展开今天的书
+setTimeout(() => {
+    render();
+    books.forEach(book => {
+        if (book.chapters.some(c => isToday(c.date))) {
+            const card = document.querySelector(`[data-book-id="${book.id}"]`);
+            if (card && !card.classList.contains('expanded')) {
+                card.classList.add('expanded');
+            }
+        }
+    });
+    updateStats();
+}, 100);
+</script>
+</body>
+</html>
